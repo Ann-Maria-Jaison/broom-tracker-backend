@@ -1,32 +1,27 @@
 const express = require("express");
-const fs = require("fs");
 const cors = require("cors");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const dataFile = "data.json";
+let broomHolder = null;
+let historyLog = []; // Store history of who took the broom
 
-// Get broom status
 app.get("/status", (req, res) => {
-    fs.readFile(dataFile, "utf8", (err, data) => {
-        if (err) return res.status(500).json({ error: "Failed to read data" });
-        res.json(JSON.parse(data));
-    });
+    res.json({ broomHolder, historyLog });
 });
 
-// Update broom status
 app.post("/update", (req, res) => {
-    const { broomHolder } = req.body;
-    const newData = { broomHolder };
+    const { broomHolder: newHolder } = req.body;
 
-    fs.writeFile(dataFile, JSON.stringify(newData, null, 2), (err) => {
-        if (err) return res.status(500).json({ error: "Failed to update data" });
-        res.json({ message: "Broom status updated", data: newData });
-    });
+    if (newHolder) {
+        historyLog.push({ name: newHolder, time: new Date().toLocaleString() });
+    }
+
+    broomHolder = newHolder;
+    res.json({ message: "Status updated", broomHolder, historyLog });
 });
 
-// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
